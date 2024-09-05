@@ -3,25 +3,6 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$sisHost = "192.168.10.94";
-$sisUsername = "koha";
-$sisPassword = "P@l!br@ryL@b@n@117#";
-$sisDb = 'reach';
-
-$sisConn = mysqli_connect($sisHost, $sisUsername, $sisPassword, $sisDb);
-if (!$sisConn) {
-    die("SIS Connection Failed: " . mysqli_connect_error());
-}
-
-$kohaHost = "localhost";
-$kohaUsername = "mwila";
-$kohaPassword = "newAge@2023";
-$kohaDb = 'koha_palabana_library';
-
-$kohaConn = mysqli_connect($kohaHost, $kohaUsername, $kohaPassword, $kohaDb);
-if (!$kohaConn) {
-    die("Koha Connection Failed: " . mysqli_connect_error());
-}
 
 function getSisData($sisConn) {
     $sql = "SELECT bi.FirstName, bi.MiddleName, bi.Surname, bi.ID as studentNumber,
