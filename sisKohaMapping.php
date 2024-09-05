@@ -1,13 +1,32 @@
+#!/usr/bin/php
 <?php
-include 'connections.php';
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+$sisHost = "192.168.10.94";
+$sisUsername = "koha";
+$sisPassword = "P@l!br@ryL@b@n@117#";
+$sisDb = 'reach';
+
+$sisConn = mysqli_connect($sisHost, $sisUsername, $sisPassword, $sisDb);
+if (!$sisConn) {
+    die("SIS Connection Failed: " . mysqli_connect_error());
+}
+
+$kohaHost = "localhost";
+$kohaUsername = "mwila";
+$kohaPassword = "newAge@2023";
+$kohaDb = 'koha_palabana_library';
+
+$kohaConn = mysqli_connect($kohaHost, $kohaUsername, $kohaPassword, $kohaDb);
+if (!$kohaConn) {
+    die("Koha Connection Failed: " . mysqli_connect_error());
+}
 
 function getSisData($sisConn) {
     $sql = "SELECT bi.FirstName, bi.MiddleName, bi.Surname, bi.ID as studentNumber,
             IF(bi.Sex = 'Male', 'M', 'F') AS Sex, bi.DateOfBirth, bi.Nationality,
+            IF(bi.Sex = 'Male','Mr','Miss') AS title,
             bi.StreetName, bi.Town, bi.Country, bi.HomePhone, bi.MobilePhone, bi.PrivateEmail,
             bi.MaritalStatus, s.ParentID, s.ShortName, p.PeriodEndDate, ce.EnrolmentDate, mu.password,
             bi.PostalCode 
@@ -19,7 +38,7 @@ function getSisData($sisConn) {
             LEFT JOIN periods p ON p.ID = ce.PeriodID
             LEFT JOIN moodle_users mu ON mu.id = bi.ID 
             WHERE ce.PeriodID = 65
-            GROUP BY bi.ID LIMIT 1";
+            GROUP BY bi.ID ";
 
     $result = mysqli_query($sisConn, $sql);
     
@@ -61,11 +80,8 @@ function insertIntoKoha($sisConn, $kohaConn) {
             continue;
         }
 
-        // Hash the password using bcrypt
-        // $password = $data['studentNumber'];
-        // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        //12345 password
         $defaultPassword = "\$2a\$08\$wDNvlD10AzzvZXjVADUGJuGFBhshiorW.mug6.3IRNt./hZMew0OS";
-
 
         $sql = "INSERT INTO koha_palabana_library.borrowers
                 (borrowernumber, cardnumber, surname, firstname, middle_name, title, othernames, initials,
@@ -81,15 +97,15 @@ function insertIntoKoha($sisConn, $kohaConn) {
                  privacy_guarantor_fines, privacy_guarantor_checkouts, checkprevcheckout, updated_on, lastseen,
                  lang, login_attempts, overdrive_auth_token, anonymized, autorenew_checkouts, primary_contact_method, protected)
                 VALUES
-                (NULL, '{$data['studentNumber']}', '{$data['Surname']}', '{$data['FirstName']}', '{$data['MiddleName']}', NULL, NULL, '{$data['ShortName']}',
+                (NULL, '{$data['studentNumber']}', '{$data['Surname']}', '{$data['FirstName']}', '{$data['MiddleName']}','{$data['title']}', NULL, '{$data['ShortName']}',
                 NULL, '{$data['StreetName']}', '{$data['StreetName']}', '{$data['StreetName']}', NULL, '{$data['Town']}', '{$data['Town']}', 
                 '{$data['PostalCode']}', '{$data['Nationality']}', '{$data['PrivateEmail']}', '{$data['MobilePhone']}', '{$data['HomePhone']}', NULL, NULL, NULL,
-                NULL,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{$data['DateOfBirth']}', 'CPL', 'ST', '{$data['EnrolmentDate']}', '{$data['PeriodEndDate']}', NOW(),
+                NULL,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{$data['DateOfBirth']}', 'CPL', 'ST', '{$data['EnrolmentDate']}', '{$data['PeriodEndDate']}', NULL,
                 NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, NULL, '{$data['MaritalStatus']}', '{$data['Sex']}', '{$defaultPassword}', NULL, 'password', NULL, '{$data['studentNumber']}',
                 'Welcome to Palabana Library. Books should be returned on time or before the due date to avoid overdue penalties.', NULL, '{$data['ParentID']}', '{$data['ShortName']}', 
                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 0, 'inherit', NULL, NULL, 'default', 0, NULL, 0, 1, NULL, 0)";
 
-        // var_dump($sql);die();
+        //var_dump($sql);die();
         $result = mysqli_query($kohaConn, $sql);
         
         if (!$result) {
@@ -104,5 +120,4 @@ insertIntoKoha($sisConn, $kohaConn);
 
 mysqli_close($sisConn);
 mysqli_close($kohaConn);
-
 ?>
